@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<!-- @noSnoop -->
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAV Gauge Dashboard</title>
+
+    <script type='text/javascript' src='/requirejs/config.js'></script>
+    <script type='text/javascript' src='/module/js/com/tridium/js/ext/require/require.min.js'></script>
+
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .container { display: flex; justify-content: center; flex-wrap: wrap; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); }
+        .gauge-container { margin: 10px; padding: 15px; text-align: center; }
+        .gauge-label { font-size: 1.1em; font-weight: bold; margin-bottom: 10px; color: #333; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="gauge-temp-container" class="gauge-container">
+            </div>
+        <div id="gauge-damper-container" class="gauge-container">
+            </div>
+    </div>
+
+<script>
+    // Using your working require.js setup, we also ask for 'd3'.
+    require(['baja!', 'd3'], function (baja, d3) {
+        'use strict';
+
+        //======================================================================
+        // GAUGE CREATION FUNCTIONS (Now inside the main script)
+        //======================================================================
+
+        /**
+         * Creates a Space Temp gauge with a blue-green-red gradient.
+         */
+        function createSpaceTempGauge(containerId, label, min, max) {
+            var width = 200, height = 180, radius = 80, arcWidth = 25;
+
+            var svg = d3.select(containerId).append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", "translate(" + width / 2 + "," + (height / 2 + 30) + ")");
+
+            svg.append("text").attr("text-anchor", "middle").attr("y", 30).style("font-size", "18px").style("font-weight", "bold").text(label);
+
+            // UPDATED: Use d3.scaleLinear() instead of d3.scale.linear()
+            var colorScale = d3.scaleLinear()
+                .domain([min, (min + max) / 2, max]) // Blue at min, Green at mid, Red at max
+                .range(["#1f77b4", "#2ca02c", "#d62728"]); // Blue -> Green -> Red
+
+            // UPDATED: Use d3.scaleLinear() instead of d3.scale.linear()
+            var angleScale = d3.scaleLinear().domain([min, max]).range([-Math.PI / 2, Math.PI / 2]);
+            
+            // UPDATED: Use d3.arc() instead of d3.svg.arc()
+            var arc = d3.arc().innerRadius(radius - arcWidth).outerRadius(radius).startAngle(-Math.PI / 2);
+
+            svg.append("path").datum({endAngle: Math.PI / 2}).style("fill", "#ddd").attr("d", arc);
+
+            var foreground = svg.append("path").datum({endAngle: -Math.PI / 2}).style("fill", colorScale(min)).attr("d", arc);
+            var valueText = svg.append("text").attr("text-anchor", "middle").attr("dy", "0.3em").style("font-size", "30px").style("font-weight", "bold").text("...");
+
+            function update(valueDisplay) {
+                var numericValue = parseFloat(valueDisplay);
+                if (isNaN(numericValue)) { return; }
+
+                valueText.text(valueDisplay);
+
+                foreground.transition().duration(750)
+                    .style("fill", colorScale(numericValue)) // Use the gradient color scale
+                    .attrTween("d", function(d) {
+                        var interpolate = d3.interpolate(d.endAngle, angleScale(numericValue));
+                        return function(t) { d.endAngle = interpolate(t); return arc(d); };
+                    });
+            }
+            return { update: update };
+        }
+
+        /**
+         * Creates a Damper gauge with stepped solid colors.
+         */
+        function createDamperGauge(containerId, label, min, max) {
+            var width = 200, height = 180, radius = 80, arcWidth = 25;
+
+            var svg = d3.select(containerId).append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", "translate(" + width / 2 + "," + (height / 2 + 30) + ")");
+
+            svg.append("text").attr("text-anchor", "middle").attr("y", 30).style("font-size", "18px").style("font-weight", "bold").text(label);
+
+            // UPDATED: Use d3.scaleLinear() instead of d3.scale.linear()
+            var angleScale = d3.scaleLinear().domain([min, max]).range([-Math.PI / 2, Math.PI / 2]);
+            
+            // UPDATED: Use d3.arc() instead of d3.svg.arc()
+            var arc = d3.arc().innerRadius(radius - arcWidth).outerRadius(radius).startAngle(-Math.PI / 2);
+
+            svg.append("path").datum({endAngle: Math.PI / 2}).style("fill", "#ddd").attr("d", arc);
+
+            var foreground = svg.append("path").datum({endAngle: -Math.PI / 2}).style("fill", "#2ca02c").attr("d", arc);
+            var valueText = svg.append("text").attr("text-anchor", "middle").attr("dy", "0.3em").style("font-size", "30px").style("font-weight", "bold").text("...");
+
+            function update(valueDisplay) {
+                var numericValue = parseFloat(valueDisplay);
+                if (isNaN(numericValue)) { return; }
+
+                valueText.text(valueDisplay);
+
+                foreground.transition().duration(750)
+                    .style("fill", numericValue > max * 0.8 ? "#d62728" : (numericValue > max * 0.6 ? "#ff7f0e" : "#2ca02c")) // Stepped colors
+                    .attrTween("d", function(d) {
+                        var interpolate = d3.interpolate(d.endAngle, angleScale(numericValue));
+                        return function(t) { d.endAngle = interpolate(t); return arc(d); };
+                    });
+            }
+            return { update: update };
+        }
+
+
+        // --- Main Niagara Logic ---
+
+        // 1. Define the points and which gauge function to use for each.
+        const pointsToMonitor = [
+            {
+                id: 'SpaceTemp',
+                ord: 'station:|slot:/VAV/SpaceTemp',
+                gauge: createSpaceTempGauge('#gauge-temp-container', 'Space Temp', 60, 80)
+            },
+            {
+                id: 'DamperCmd',
+                ord: 'station:|slot:/VAV/DamperCmd',
+                gauge: createDamperGauge('#gauge-damper-container', 'Damper Position', 0, 100)
+            }
+        ];
+
+        // 2. This is the proven Subscriber creation and attachment logic.
+        const subscriber = new baja.Subscriber();
+        const pointToGaugeMap = new Map();
+
+        subscriber.attach('changed', function(prop) {
+            if (prop.getName() === 'out') {
+                const gaugeUpdater = pointToGaugeMap.get(this);
+                if (gaugeUpdater) {
+                    gaugeUpdater.update(this.getOut().getValueDisplay());
+                }
+            }
+        });
+
+        // 3. Resolve all points and link them to their gauges.
+        pointsToMonitor.forEach(config => {
+            baja.Ord.make(config.ord).get({ subscriber: subscriber })
+                .then(point => {
+                    pointToGaugeMap.set(point, config.gauge);
+                    config.gauge.update(point.getOut().getValueDisplay());
+                })
+                .catch(error => {
+                    console.error("Failed to resolve ORD: " + config.ord, error);
+                });
+        });
+    });
+</script>
+
+</body>
+</html>
