@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<!-- @noSnoop -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RGB Color Slider</title>
+
+    <!-- RequireJS and BajaJS configuration from the station -->
+    <script type='text/javascript' src='/requirejs/config.js'></script>
+    <script type='text/javascript' src='/module/js/com/tridium/js/ext/require/require.min.js'></script>
+
+    <!-- Link to the rangeslider.js CSS file -->
+    <!-- IMPORTANT: Adjust this path to where you have stored the rangeslider.css file -->
+    <link rel="stylesheet" href="/file/jsFiles/rangeSliderJs/rangeslider.css">
+
+    <style>
+        :root {
+            --slider-red: #e74c3c;
+            --slider-green: #2ecc71;
+            --slider-blue: #3498db;
+            --slider-handle-color: #ffffff;
+            --slider-handle-border-color: #ccc;
+            --slider-background-color: #e6e6e6;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #555;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 30px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .color-preview-wrapper {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .color-preview {
+            width: 100%;
+            height: 150px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background-color: #000000;
+            transition: background-color 0.3s ease;
+        }
+        
+        .hex-code-display {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-top: 15px;
+            padding: 5px;
+            background-color: #eee;
+            border-radius: 5px;
+            display: inline-block;
+        }
+
+        .slider-group {
+            margin-bottom: 30px;
+        }
+
+        .slider-label-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .slider-label {
+            font-weight: bold;
+        }
+        
+        .slider-value {
+            font-weight: bold;
+            font-size: 1.1em;
+            background-color: #eee;
+            padding: 3px 10px;
+            border-radius: 5px;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        /* Override rangeslider.js styles for each color */
+        #red-slider + .rangeslider .rangeslider__fill { background: var(--slider-red) !important; }
+        #green-slider + .rangeslider .rangeslider__fill { background: var(--slider-green) !important; }
+        #blue-slider + .rangeslider .rangeslider__fill { background: var(--slider-blue) !important; }
+
+        .rangeslider__handle {
+             background: var(--slider-handle-color) !important;
+             border: 1px solid var(--slider-handle-border-color) !important;
+        }
+
+        .rangeslider {
+            background: var(--slider-background-color) !important;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>RGB Color Control</h1>
+    <div class="container">
+    
+        <div class="color-preview-wrapper">
+            <div id="color-preview" class="color-preview"></div>
+            <div id="hex-code" class="hex-code-display">#000000</div>
+        </div>
+
+        <!-- Sliders will be dynamically generated here -->
+        <div id="sliders-container"></div>
+    </div>
+
+<script>
+    require([
+        'baja!',
+        'jquery',
+        // IMPORTANT: Adjust this path to where you have stored rangeslider.min.js
+        '/file/jsFiles/rangeSliderJs/rangeslider.min.js'
+    ], function (baja, $) {
+        'use strict';
+
+        const pointsConfig = [
+            { id: 'red', ord: 'station:|slot:/ColorSlider/Red' },
+            { id: 'green', ord: 'station:|slot:/ColorSlider/Green' },
+            { id: 'blue', ord: 'station:|slot:/ColorSlider/Blue' }
+        ];
+        
+        const programOrd = 'station:|slot:/ColorSlider/HexColors/BrushOut';
+
+        const container = $('#sliders-container');
+        const pointToSliderMap = new Map();
+        const subscriber = new baja.Subscriber();
+
+        // --- Helper function to convert a single color component to a 2-digit hex string ---
+        function toHex(c) {
+            const hex = parseInt(c, 10).toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        }
+        
+        // --- Main function to update the UI based on slider values ---
+        function updateColor() {
+            const r = $('#red-slider').val();
+            const g = $('#green-slider').val();
+            const b = $('#blue-slider').val();
+
+            $('#value-red').text(r);
+            $('#value-green').text(g);
+            $('#value-blue').text(b);
+            
+            const hexString = '#' + toHex(r) + toHex(g) + toHex(b);
+            
+            $('#color-preview').css('background-color', hexString);
+            $('#hex-code').text(hexString.toUpperCase());
+        }
+        
+        // --- Function to write the final brush value to Niagara ---
+        function setBrushColor() {
+            const hexString = $('#hex-code').text();
+            
+            baja.Ord.make(programOrd).get().then(prop => {
+                const brush = baja.$('gx:Brush', 'solid ' + hexString);
+                return prop.set(brush);
+            }).then(() => {
+                console.log(`Successfully set BrushOut to: ${hexString}`);
+            }).catch(err => {
+                console.error(`Failed to set BrushOut property:`, err);
+            });
+        }
+
+        // --- Subscriber Logic ---
+        subscriber.attach('changed', function (prop) {
+            if (prop.getName() === 'out') {
+                const config = pointToSliderMap.get(this);
+                if (config) {
+                    const newValue = this.getOut().getValue();
+                    $('#' + config.id + '-slider').val(newValue).change();
+                    updateColor(); // Update visuals when a point changes externally
+                }
+            }
+        });
+
+        // --- Main Initialization Logic ---
+        pointsConfig.forEach(config => {
+            const sliderHtml = `
+                <div class="slider-group">
+                    <div class="slider-label-group">
+                        <label for="${config.id}-slider" class="slider-label">${config.id.charAt(0).toUpperCase() + config.id.slice(1)}</label>
+                        <span class="slider-value" id="value-${config.id}">0</span>
+                    </div>
+                    <input type="range" id="${config.id}-slider" min="0" max="255" step="1" value="0" />
+                </div>
+            `;
+            container.append(sliderHtml);
+
+            const $slider = $('#' + config.id + '-slider');
+
+            $slider.rangeslider({
+                polyfill: false,
+                onSlide: function(position, value) {
+                    updateColor(); // Update color preview in real-time
+                },
+                onSlideEnd: function(position, value) {
+                    const floatValue = parseFloat(value);
+                    
+                    // First, set the individual R, G, or B point
+                    baja.Ord.make(config.ord).get().then(point => {
+                        const statusValue = baja.$('baja:StatusNumeric', {
+                            status: baja.Status.ok,
+                            value: floatValue
+                        });
+                        return point.setFallback(statusValue);
+                    }).then(() => {
+                        console.log(`Successfully set ${config.id} to ${floatValue}`);
+                        // After setting the individual point, update the program's brush property
+                        setBrushColor();
+                    }).catch(err => {
+                        console.error(`Failed to set ${config.id}:`, err);
+                    });
+                }
+            });
+
+            // Get the initial point value from Niagara
+            baja.Ord.make(config.ord).get({ subscriber: subscriber })
+                .then(point => {
+                    pointToSliderMap.set(point, config);
+                    const initialValue = point.getOut().getValue();
+                    $slider.val(initialValue).change();
+                    updateColor();
+                })
+                .catch(err => {
+                    console.error(`Failed to resolve ORD: ${config.ord}`, err);
+                    $slider.prop('disabled', true).rangeslider('update', true);
+                });
+        });
+    });
+</script>
+
+</body>
+</html>
