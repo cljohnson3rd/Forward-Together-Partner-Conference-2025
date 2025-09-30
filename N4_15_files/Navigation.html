@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<!-- @noSnoop -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forward Together - 2025</title>
+    <script type='text/javascript' src='/requirejs/config.js'></script>
+    <script type='text/javascript' src='/module/js/com/tridium/js/ext/require/require.min.js'></script>
+    <style>
+        :root {
+            --primary-blue: #1e3a8a;
+            --accent-blue: #3b82f6;
+            --light-blue: #60a5fa;
+            --white: #ffffff;
+            --gray-100: #f3f4f6;
+            --gray-300: #d1d5db;
+            --gray-600: #4b5563;
+            --gray-800: #1f2937;
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --gradient-primary: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%);
+            
+            /* Theme toggle variables */
+            --toggle-bg: #e9e9e9;
+            --toggle-fg: #f4f4f4;
+            --toggle-icon-color: #2c3e50;
+        }
+
+        body.dark-mode {
+            --primary-blue: #2c3e50;
+            --accent-blue: #4ca1af;
+            --light-blue: #76c7ff;
+            --white: #f4f4f4;
+            --gray-100: #34495e;
+            --gray-300: #4a5568;
+            --gray-600: #bdc3c7;
+            --gray-800: #ecf0f1;
+            --gradient-primary: linear-gradient(135deg, #2c3e50 0%, #4ca1af 50%, #76c7ff 100%);
+            
+            /* Dark mode toggle variables */
+            --toggle-bg: #76c7ff;
+            --toggle-fg: #2c3e50;
+            --toggle-icon-color: #f4f4f4;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--gradient-primary);
+            min-height: 100vh;
+            color: var(--white);
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 2rem 1rem;
+            position: relative;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            height: 80px;
+            width: auto;
+            filter: brightness(0) invert(1);
+            transition: transform 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        .title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(45deg, #ffffff, #e0e7ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1rem 2rem;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        /* Dashboard Cards */
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .dashboard-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 1.5rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: transform 0.3s ease;
+        }
+
+        .dashboard-card:hover .card-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--white);
+        }
+
+        .card-description {
+            font-size: 1rem;
+            opacity: 0.8;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-features {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-features li {
+            padding: 0.25rem 0;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        .card-features li::before {
+            content: "•";
+            color: var(--light-blue);
+            margin-right: 0.5rem;
+        }
+
+        .card-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--white);
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .card-link:hover {
+            background: var(--white);
+            color: var(--primary-blue);
+            transform: translateX(5px);
+        }
+
+        .card-link::after {
+            content: "→";
+            transition: transform 0.3s ease;
+        }
+
+        .card-link:hover::after {
+            transform: translateX(3px);
+        }
+
+        /* Category Sections */
+        .category-section {
+            margin-bottom: 3rem;
+        }
+
+        .category-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .category-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: var(--light-blue);
+            border-radius: 2px;
+        }
+
+        /* Theme Toggle Switch Styles (from AirHandlerGraphic) */
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+        }
+        .theme-switch {
+            display: inline-block;
+            height: 34px;
+            position: relative;
+            width: 60px;
+        }
+        .theme-switch input {
+            display:none;
+        }
+        .slider {
+            background-color: var(--toggle-bg);
+            bottom: 0;
+            cursor: pointer;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            background-color: var(--toggle-fg);
+            bottom: 4px;
+            content: "";
+            height: 26px;
+            left: 4px;
+            position: absolute;
+            transition: .4s;
+            width: 26px;
+            border-radius: 50%;
+            /* Sun and Moon Icons */
+            content: '☀️';
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: var(--toggle-icon-color);
+        }
+        input:checked + .slider {
+            background-color: var(--toggle-bg);
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+            content: '🌙';
+        }
+
+        /* Logoff Button Positioning */
+        .logoff-button {
+            position: absolute;
+            top: 4rem;
+            right: 1rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .dashboard-card {
+                padding: 1.5rem;
+            }
+            
+            .logo-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+
+        /* Loading Animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .loading {
+            animation: pulse 2s infinite;
+        }
+
+        /* Floating Elements Animation */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .floating-element {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-element:nth-child(1) { top: 20%; left: 10%; animation-delay: 0s; }
+        .floating-element:nth-child(2) { top: 60%; right: 10%; animation-delay: 2s; }
+        .floating-element:nth-child(3) { bottom: 20%; left: 20%; animation-delay: 4s; }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="background-animation" id="backgroundAnimation"></div>
+    
+    <!-- Floating Elements -->
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <!-- Theme Toggle Switch (from AirHandlerGraphic) -->
+        <div class="theme-switch-wrapper">
+            <label class="theme-switch" for="checkbox">
+                <input type="checkbox" id="checkbox" />
+                <div class="slider round"></div>
+            </label>
+        </div>
+        
+        <!-- Logoff Button -->
+        <div class="logoff-button">
+            <button onclick="logoff()" style="
+                background: rgba(255, 255, 255, 0.2);
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                color: white;
+                padding: 0.75rem 1.5rem;
+                border-radius: 50px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                backdrop-filter: blur(10px);
+                font-family: inherit;
+                font-size: 0.9rem;
+            " onmouseover="this.style.background='rgba(255,255,255,0.3)'; this.style.transform='translateY(-2px)'" 
+               onmouseout="this.style.background='rgba(255,255,255,0.2)'; this.style.transform='translateY(0)'">
+                Logoff
+            </button>
+        </div>
+        
+        <div class="logo-container">
+            <!-- Logo removed per user request -->
+        </div>
+        <h1 class="title">Lynxspring Partner Conference</h1>
+        <p class="subtitle">Forward Together 2025 - Rethink the Possibilities</p>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Building Automation Systems -->
+        <section class="category-section">
+            <h2 class="category-title">Building Automation Systems</h2>
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-icon">🏢</div>
+                    <h3 class="card-title">Air Handler Unit 18</h3>
+                    <p class="card-description">Comprehensive air handling unit control with interactive graphics, point monitoring, and override capabilities.</p>
+                    <ul class="card-features">
+                        <li>Real-time SVG graphics with animations</li>
+                        <li>Point override and control panel</li>
+                        <li>Dark/light theme toggle</li>
+                        <li>Temperature history charts</li>
+                    </ul>
+                    <a href="#" onclick="openDashboard('AirHandlerGraphic.html'); return false;" class="card-link">Open Dashboard</a>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-icon">🌊</div>
+                    <h3 class="card-title">VAV Terminal Unit</h3>
+                    <p class="card-description">Variable Air Volume terminal unit visualization with damper control and heating coil management.</p>
+                    <ul class="card-features">
+                        <li>Interactive VAV graphics</li>
+                        <li>Damper position visualization</li>
+                        <li>Heating coil status display</li>
+                        <li>Real-time point monitoring</li>
+                    </ul>
+                    <a href="#" onclick="openDashboard('VavGraphic.html'); return false;" class="card-link">Open Dashboard</a>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-icon">⚡</div>
+                    <h3 class="card-title">Electric Meter Dashboard</h3>
+                    <p class="card-description">Advanced electrical monitoring with 3D gauges, phase voltage tracking, and power demand analysis.</p>
+                    <ul class="card-features">
+                        <li>3D animated gauges</li>
+                        <li>Three-phase voltage monitoring</li>
+                        <li>Power demand visualization</li>
+                        <li>System status indicators</li>
+                    </ul>
+                    <a href="#" onclick="openDashboard('MeterDashboard.html'); return false;" class="card-link">Open Dashboard</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Visualization & Analytics -->
+        <section class="category-section">
+            <h2 class="category-title">Data Visualization & Analytics</h2>
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-icon">📊</div>
+                    <h3 class="card-title">Plotly.js Charts</h3>
+                    <p class="card-description">Advanced charting with Plotly.js featuring responsive design and interactive temperature history.</p>
+                    <ul class="card-features">
+                        <li>Plotly.js interactive charts</li>
+                        <li>Last hour temperature data</li>
+                        <li>Responsive design</li>
+                        <li>Auto-refresh capabilities</li>
+                    </ul>
+                    <a href="#" onclick="openDashboard('chart_lastHour_responsive_plotlyjs_ld.html'); return false;" class="card-link">View Charts</a>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-icon">📈</div>
+                    <h3 class="card-title">Chart.js Analytics</h3>
+                    <p class="card-description">Chart.js powered analytics dashboard with temperature tracking and historical data visualization.</p>
+                    <ul class="card-features">
+                        <li>Chart.js library integration</li>
+                        <li>Real-time data updates</li>
+                        <li>Historical trend analysis</li>
+                        <li>Theme-aware styling</li>
+                    </ul>
+                    <a href="#" onclick="openDashboard('chart_lastHour_responsive_chartjs_ld.html'); return false;" class="card-link">View Analytics</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gauge Dashboards -->
+        <section class="category-section">
+            <h2 class="category-title">Gauge Dashboards</h2>
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-icon">🎯</div>
+                    <h3 class="card-title">Canvas Gauge Dashboard</h3>
+                    <p class="card-description">Professional radial gauges with 3D effects and smooth animations for VAV monitoring.</p>
+                    <ul class="card-features">
+                        <li>Canvas-based radial gauges</li>
+                        <li>3D visual effects</li>
+                        <li>Smooth animations</li>
+                        <li>Professional styling</li>
+                    </ul>
+                    <a href="#" onclick="openDashboard('DashboardCanvasGauge_ld.html'); return false;" class="card-link">Open Gauges</a>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-icon">📊</div>
+                    <h3 class="card-title">Linear Gauge Dashboard</h3>
+                    <p class="card-description">Vertical linear gauges with modern styling and precise measurement displays.</p>
+                    <ul class="card-features">
+                        <li>Linear vertical gauges</li>
+                        <li>Precise value display</li>
+                        <li>Modern UI design</li>
+                        <li>Real-time updates</li>
+                    </ul>
+                    <a href="#" onclick="openDashboard('DashboardBarChart_ld.html'); return false;" class="card-link">Open Gauges</a>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-icon">⭕</div>
+                    <h3 class="card-title">D3.js Gauge Dashboard</h3>
+                    <p class="card-description">Custom D3.js gauges with clean design and theme switching capabilities.</p>
+                    <ul class="card-features">
+                        <li>D3.js custom gauges</li>
+                        <li>Clean minimalist design</li>
+                        <li>Theme switching</li>
+                        <li>Smooth transitions</li>
+                    </ul>
+                    <a href="#" onclick="openDashboard('DashboardNoGradient_ld.html'); return false;" class="card-link">Open Gauges</a>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-icon">🌈</div>
+                    <h3 class="card-title">Gradient Gauge Dashboard</h3>
+                    <p class="card-description">Colorful D3.js gauges with gradient fills and dynamic color changes based on values.</p>
+                    <ul class="card-features">
+                        <li>Gradient-filled gauges</li>
+                        <li>Dynamic color mapping</li>
+                        <li>Value-based styling</li>
+                        <li>Visual feedback</li>
+                    </ul>
+                    <a href="#" onclick="openDashboard('DashboardWithGradient.html'); return false;" class="card-link">Open Gauges</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Control Interfaces -->
+        <section class="category-section">
+            <h2 class="category-title">Control Interfaces</h2>
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-icon">🎚️</div>
+                    <h3 class="card-title">Setpoint Control</h3>
+                    <p class="card-description">Interactive slider controls for setpoint management with real-time value updates.</p>
+                    <ul class="card-features">
+                        <li>Range slider controls</li>
+                        <li>Real-time setpoint adjustment</li>
+                        <li>Multiple parameter control</li>
+                        <li>Unit display integration</li>
+                    </ul>
+                    <a href="#" onclick="openDashboard('SetpointControlWithRangeSlider.html'); return false;" class="card-link">Open Controls</a>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-icon">🎨</div>
+                    <h3 class="card-title">RGB Color Control</h3>
+                    <p class="card-description">Advanced color picker with RGB sliders and live preview for lighting control systems.</p>
+                    <ul class="card-features">
+                        <li>RGB color sliders</li>
+                        <li>Live color preview</li>
+                        <li>Hex code display</li>
+                        <li>Lighting integration</li>
+                    </ul>
+                    <a href="#" onclick="openDashboard('RGB_Slider.html'); return false;" class="card-link">Open Controls</a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Use RequireJS to load D3.js locally, following the same pattern as your other Tridium files
+        require(['d3'], function (d3) {
+            'use strict';
+            
+            // Background Animation using D3.js
+            function createBackgroundAnimation() {
+                const svg = d3.select("#backgroundAnimation")
+                    .append("svg")
+                    .attr("width", "100%")
+                    .attr("height", "100%");
+
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+
+                // Create floating particles
+                const particles = d3.range(50).map(() => ({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    radius: Math.random() * 3 + 1
+                }));
+
+                const particle = svg.selectAll(".particle")
+                    .data(particles)
+                    .enter().append("circle")
+                    .attr("class", "particle")
+                    .attr("r", d => d.radius)
+                    .style("fill", "rgba(255, 255, 255, 0.3)")
+                    .style("stroke", "rgba(255, 255, 255, 0.1)")
+                    .style("stroke-width", 1);
+
+                function updateParticles() {
+                    particles.forEach(d => {
+                        d.x += d.vx;
+                        d.y += d.vy;
+
+                        if (d.x < 0 || d.x > width) d.vx *= -1;
+                        if (d.y < 0 || d.y > height) d.vy *= -1;
+                    });
+
+                    particle
+                        .attr("cx", d => d.x)
+                        .attr("cy", d => d.y);
+
+                    requestAnimationFrame(updateParticles);
+                }
+
+                updateParticles();
+            }
+
+            // Initialize background animation
+            createBackgroundAnimation();
+
+            // Responsive background animation resize
+            window.addEventListener('resize', () => {
+                d3.select("#backgroundAnimation svg").remove();
+                createBackgroundAnimation();
+            });
+        });
+
+        // Dashboard navigation function (outside require block since it doesn't need D3)
+        function openDashboard(filename) {
+            // Using the proper Tridium URL format with /ord/ path
+            const url = `/ord/file:%5EForwardTogether/${filename}%7Cview:web:FileDownloadView`;
+            console.log('Opening:', url); // Debug line
+            window.location.href = url;
+        }
+
+        // Logoff function
+        function logoff() {
+            window.location.href = '/logout';
+        }
+
+        // Initialize other functionality after DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Theme Toggle Script (from AirHandlerGraphic)
+            const toggle = document.getElementById('checkbox');
+            if (toggle) {
+                const currentTheme = localStorage.getItem('theme');
+
+                if (currentTheme) {
+                    document.body.classList.add(currentTheme);
+                    if (currentTheme === 'dark-mode') {
+                        toggle.checked = true;
+                    }
+                }
+
+                toggle.addEventListener('change', function() {
+                    if(this.checked) {
+                        document.body.classList.add('dark-mode');
+                        localStorage.setItem('theme', 'dark-mode');
+                    } else {
+                        document.body.classList.remove('dark-mode');
+                        localStorage.setItem('theme', 'light-mode');
+                    }
+                });
+
+                // Listen for theme changes from other tabs/windows
+                window.addEventListener('storage', function(e) {
+                    if (e.key === 'theme') {
+                        if (e.newValue === 'dark-mode') {
+                            document.body.classList.add('dark-mode');
+                            toggle.checked = true;
+                        } else {
+                            document.body.classList.remove('dark-mode');
+                            toggle.checked = false;
+                        }
+                    }
+                });
+
+                // Also check for theme changes when the window regains focus
+                window.addEventListener('focus', function() {
+                    const currentTheme = localStorage.getItem('theme');
+                    if (currentTheme === 'dark-mode' && !document.body.classList.contains('dark-mode')) {
+                        document.body.classList.add('dark-mode');
+                        toggle.checked = true;
+                    } else if (currentTheme !== 'dark-mode' && document.body.classList.contains('dark-mode')) {
+                        document.body.classList.remove('dark-mode');
+                        toggle.checked = false;
+                    }
+                });
+            }
+            
+            // Add click handlers to dashboard cards (for clicking outside of the link)
+            document.querySelectorAll('.dashboard-card').forEach(card => {
+                card.addEventListener('click', function(e) {
+                    // Only trigger if clicking on the card itself, not the link
+                    if (e.target.tagName !== 'A' && !e.target.closest('a')) {
+                        const link = this.querySelector('.card-link');
+                        if (link && link.onclick) {
+                            link.onclick();
+                        }
+                    }
+                });
+            });
+
+            // Add loading states for better UX
+            document.querySelectorAll('.dashboard-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    this.classList.add('loading');
+                    setTimeout(() => {
+                        this.classList.remove('loading');
+                    }, 1000);
+                });
+            });
+
+            // Add keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.target.classList.contains('dashboard-card')) {
+                    e.target.click();
+                }
+            });
+
+            // Make cards focusable for accessibility
+            document.querySelectorAll('.dashboard-card').forEach(card => {
+                card.setAttribute('tabindex', '0');
+                card.setAttribute('role', 'button');
+            });
+        });
+    </script>
+</body>
+</html>
